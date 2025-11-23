@@ -4,12 +4,6 @@
 
 This repository demonstrates the performance difference between **optimized** and **non-optimized** approaches in a .NET 10 Web API application. The project serves as a practical comparison tool to evaluate the impact of various optimization techniques on memory usage, execution time, and resource efficiency.
 
-## Project Structure
-
-- **IntegrationOptimization/**: A .NET 10 Web API application exposing two endpoints for comparison
-- **BenchmarkSuite1/**: A BenchmarkDotNet suite for systematic performance measurement
-- **.gitignore**: Standard .NET gitignore configuration
-
 ## API Endpoints
 
 The Web API exposes two endpoints that perform the same task using different approaches:
