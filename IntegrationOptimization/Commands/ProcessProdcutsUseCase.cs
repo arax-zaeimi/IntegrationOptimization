@@ -11,8 +11,13 @@ public class ProcessProdcutsUseCase(ILogger<ProcessProdcutsUseCase> logger, IPro
         List<Product> allProducucts = [];
         for (int i = 0; i < TotalIterations; i++)
         {
-            var products = await apiClient.GetProductsNonOptimized();
-            allProducucts.AddRange(products.Products);
+            var apiResponse = await apiClient.GetProductsNonOptimized();
+            if (apiResponse.IsFailure)
+            {
+                logger.LogError("Failed to fetch products on iteration {Iteration}: {Error}", i, apiResponse.Error);
+                continue; // Skip this iteration but continue processing
+            }
+            allProducucts.AddRange(apiResponse.Value!.Products);
         }
 
         var index = 0;
@@ -25,6 +30,9 @@ public class ProcessProdcutsUseCase(ILogger<ProcessProdcutsUseCase> logger, IPro
     public async Task ProcessOptimizedAsync()
     {
         var index = 0;
+        // Use IAsyncEnumerable to process products as they are fetched
+        // Don't accumulate all products in memory
+        // Process each product as it is yielded
         await foreach (var product in FetchProducts())
         {
             logger.LogInformation("Processed product: {Index}-{Title}", index++, product.Title);
@@ -33,11 +41,18 @@ public class ProcessProdcutsUseCase(ILogger<ProcessProdcutsUseCase> logger, IPro
 
     private async IAsyncEnumerable<Product> FetchProducts()
     {
+        // Fetch and process products in a streaming manner
         for (int i = 0; i < TotalIterations; i++)
         {
-            var productsResponse = await apiClient.GetProductsOptimized();
-            foreach (var product in productsResponse.Products)
+            var apiResponse = await apiClient.GetProductsOptimized();
+            if (apiResponse.IsFailure)
             {
+                logger.LogError("Failed to fetch products on iteration {Iteration}: {Error}", i, apiResponse.Error);
+                continue;
+            }
+            foreach (var product in apiResponse.Value!.Products)
+            {
+                // Yield each product as it is processed
                 yield return product;
             }
         }

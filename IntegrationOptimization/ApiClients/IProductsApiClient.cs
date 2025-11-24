@@ -4,7 +4,7 @@ namespace IntegrationOptimization.ApiClients
 {
     public interface IProductsApiClient
     {
-        Task<ProductResponse> GetProductsNonOptimized();
-        Task<ProductResponse> GetProductsOptimized();
+        public Task<ApiResponse<ProductResponse>> GetProductsNonOptimized();
+        public Task<ApiResponse<ProductResponse>> GetProductsOptimized();
     }
 }
