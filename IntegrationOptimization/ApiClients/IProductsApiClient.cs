@@ -6,5 +6,6 @@ namespace IntegrationOptimization.ApiClients
     {
         public Task<ApiResponse<ProductResponse>> GetProductsNonOptimized();
         public Task<ApiResponse<ProductResponse>> GetProductsOptimized();
+        public Task<ApiResponse<ProductResponse>> GetProductsSuperOptimized();
     }
 }

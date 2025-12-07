@@ -5,5 +5,6 @@ namespace IntegrationOptimization.Commands
     {
         Task ProcessNonOptimizedAsync();
         Task ProcessOptimizedAsync();
+        Task ProcessSuperOptimizedAsync();
     }
 }

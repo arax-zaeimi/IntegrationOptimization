@@ -33,18 +33,49 @@ public class ProcessProdcutsUseCase(ILogger<ProcessProdcutsUseCase> logger, IPro
         // Use IAsyncEnumerable to process products as they are fetched
         // Don't accumulate all products in memory
         // Process each product as it is yielded
-        await foreach (var product in FetchProducts())
+        await foreach (var product in FetchProductsOptimized())
         {
             logger.LogInformation("Processed product: {Index}-{Title}", index++, product.Title);
         }
     }
 
-    private async IAsyncEnumerable<Product> FetchProducts()
+    public async Task ProcessSuperOptimizedAsync()
+    {
+        var index = 0;
+        // Use IAsyncEnumerable to process products as they are fetched
+        // Don't accumulate all products in memory
+        // Process each product as it is yielded
+        await foreach (var product in FetchProductsSuperOptimized())
+        {
+            logger.LogInformation("Processed product: {Index}-{Title}", index++, product.Title);
+        }
+    }
+
+    private async IAsyncEnumerable<Product> FetchProductsOptimized()
     {
         // Fetch and process products in a streaming manner
         for (int i = 0; i < TotalIterations; i++)
         {
             var apiResponse = await apiClient.GetProductsOptimized();
+            if (apiResponse.IsFailure)
+            {
+                logger.LogError("Failed to fetch products on iteration {Iteration}: {Error}", i, apiResponse.Error);
+                continue;
+            }
+            foreach (var product in apiResponse.Value!.Products)
+            {
+                // Yield each product as it is processed
+                yield return product;
+            }
+        }
+    }
+
+    private async IAsyncEnumerable<Product> FetchProductsSuperOptimized()
+    {
+        // Fetch and process products in a streaming manner
+        for (int i = 0; i < TotalIterations; i++)
+        {
+            var apiResponse = await apiClient.GetProductsSuperOptimized();
             if (apiResponse.IsFailure)
             {
                 logger.LogError("Failed to fetch products on iteration {Iteration}: {Error}", i, apiResponse.Error);

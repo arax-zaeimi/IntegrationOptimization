@@ -1,10 +1,8 @@
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Engines;
 using IntegrationOptimization.ApiClients;
-using IntegrationOptimization.Commands;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -14,12 +12,12 @@ namespace IntegrationOptimization.Benchmarks;
 
 [MemoryDiagnoser]
 [ThreadingDiagnoser]
-[SimpleJob(RunStrategy.ColdStart, iterationCount: 3)] // Reduce iterations for faster testing
+[SimpleJob(RunStrategy.ColdStart, iterationCount: 5)]
 [MinColumn, MaxColumn, MeanColumn, MedianColumn]
 [MarkdownExporter, HtmlExporter]
-public class ProductProcessingBenchmark
+public class ApiClientBenchmark
 {
-    private IProcessProdcutsUseCase _processProductsUseCase = null!;
+    private IProductsApiClient _apiClient = null!;
     private ServiceProvider _serviceProvider = null!;
 
     [GlobalSetup]
@@ -30,7 +28,7 @@ public class ProductProcessingBenchmark
         // Configure logging with minimal output for benchmarks
         services.AddLogging(builder => 
             builder.AddConsole()
-                   .SetMinimumLevel(LogLevel.Warning)); // Reduce log noise during benchmarks
+                   .SetMinimumLevel(LogLevel.Error)); // Minimal logging for cleaner benchmark results
         
         // Configure HttpClient with the same settings as the main application
         services.AddHttpClient("DummyJsonApi", client =>
@@ -39,12 +37,11 @@ public class ProductProcessingBenchmark
             client.Timeout = TimeSpan.FromSeconds(30);
         });
         
-        // Register services
+        // Register API client
         services.AddScoped<IProductsApiClient, ProductsApiClient>();
-        services.AddScoped<IProcessProdcutsUseCase, ProcessProdcutsUseCase>();
         
         _serviceProvider = services.BuildServiceProvider();
-        _processProductsUseCase = _serviceProvider.GetRequiredService<IProcessProdcutsUseCase>();
+        _apiClient = _serviceProvider.GetRequiredService<IProductsApiClient>();
     }
 
     [GlobalCleanup]
@@ -54,23 +51,29 @@ public class ProductProcessingBenchmark
     }
 
     [Benchmark(Baseline = true)]
-    [BenchmarkCategory("Processing")]
-    public async Task ProcessProductsNonOptimized()
+    [BenchmarkCategory("ApiClient")]
+    public async Task GetProductsNonOptimized()
     {
-        await _processProductsUseCase.ProcessNonOptimizedAsync();
+        var response = await _apiClient.GetProductsNonOptimized();
+        // Ensure the response is consumed to avoid any lazy evaluation effects
+        _ = response.IsSuccess;
     }
 
     [Benchmark]
-    [BenchmarkCategory("Processing")]
-    public async Task ProcessProductsOptimized()
+    [BenchmarkCategory("ApiClient")]
+    public async Task GetProductsOptimized()
     {
-        await _processProductsUseCase.ProcessOptimizedAsync();
+        var response = await _apiClient.GetProductsOptimized();
+        // Ensure the response is consumed to avoid any lazy evaluation effects
+        _ = response.IsSuccess;
     }
 
     [Benchmark]
-    [BenchmarkCategory("Processing")]
-    public async Task ProcessProductsSuperOptimized()
+    [BenchmarkCategory("ApiClient")]
+    public async Task GetProductsSuperOptimized()
     {
-        await _processProductsUseCase.ProcessSuperOptimizedAsync();
+        var response = await _apiClient.GetProductsSuperOptimized();
+        // Ensure the response is consumed to avoid any lazy evaluation effects
+        _ = response.IsSuccess;
     }
 }
