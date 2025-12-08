@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>IntegrationOptimization.Benchmarks.ApiClientBenchmark-20251206-205949</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.15.2, Windows 11 (10.0.26200.7171)
+Unknown processor
+.NET SDK 10.0.100
+  [Host]     : .NET 10.0.0 (10.0.25.52411), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+  Job-KFGNHS : .NET 10.0.0 (10.0.25.52411), X64 RyuJIT AVX-512F+CD+BW+DQ+VL+VBMI
+</code></pre>
+<pre><code>IterationCount=5  RunStrategy=ColdStart  
+</code></pre>
+
+<table>
+<thead><tr><th>Method             </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Median</th><th>Min</th><th>Max</th><th>Ratio</th><th>RatioSD</th><th>Completed Work Items</th><th>Lock Contentions</th><th>Allocated</th><th>Alloc Ratio</th>
+</tr>
+</thead><tbody><tr><td>GetProductsNonOptimized</td><td>92.76 ms</td><td>140.83 ms</td><td>36.57 ms</td><td>78.00 ms</td><td>73.62 ms</td><td>158.1 ms</td><td>1.09</td><td>0.48</td><td>14.0000</td><td>-</td><td>247.06 KB</td><td>1.00</td>
+</tr><tr><td>GetProductsOptimized</td><td>57.39 ms</td><td>286.76 ms</td><td>74.47 ms</td><td>23.93 ms</td><td>23.17 ms</td><td>190.6 ms</td><td>0.67</td><td>0.83</td><td>1.0000</td><td>-</td><td>348.45 KB</td><td>1.41</td>
+</tr><tr><td>GetProductsSuperOptimized</td><td>54.05 ms</td><td>246.00 ms</td><td>63.88 ms</td><td>26.46 ms</td><td>24.46 ms</td><td>168.3 ms</td><td>0.63</td><td>0.72</td><td>1.0000</td><td>-</td><td>344.79 KB</td><td>1.40</td>
+</tr></tbody></table>
+</body>
+</html>
