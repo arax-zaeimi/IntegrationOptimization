@@ -1,12 +1,17 @@
 ﻿using IntegrationOptimization.Models;
+using IntegrationOptimization.Services;
 using System.Buffers;
 using System.Text.Json;
+using System.IO.Compression;
+using System.Runtime.CompilerServices;
 
 namespace IntegrationOptimization.ApiClients;
 
 public class ProductsApiClient(IHttpClientFactory httpClientFactory) : IProductsApiClient
 {
     private const string ApiClientName = "DummyJsonApi";
+    private readonly CloudFileProcessor _cloudFileProcessor = new(httpClientFactory);
+
     public async Task<ApiResponse<ProductResponse>> GetProductsNonOptimized()
     {
         var client = new HttpClient();
@@ -135,5 +140,62 @@ public class ProductsApiClient(IHttpClientFactory httpClientFactory) : IProducts
             // Always return the rented buffer to the pool
             ArrayPool<byte>.Shared.Return(buffer);
         }
+    }
+    
+    public async IAsyncEnumerable<InvoiceItemLine> ReadInvoiceItemsFromCompressedFileAsync(
+        string filePath, 
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
+        using var gzipStream = new GZipStream(fileStream, CompressionMode.Decompress);
+        using var streamReader = new StreamReader(gzipStream);
+        
+        string? line;
+        while ((line = await streamReader.ReadLineAsync(cancellationToken)) != null)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+            
+            InvoiceItemLine? invoiceItem = null;
+            try
+            {
+                invoiceItem = JsonSerializer.Deserialize<InvoiceItemLine>(line, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch (JsonException)
+            {
+                // Skip malformed JSON lines - you might want to log this in a real application
+                continue;
+            }
+            
+            if (invoiceItem != null)
+            {
+                yield return invoiceItem;
+            }
+        }
+    }
+
+    public async IAsyncEnumerable<InvoiceItemLine> ReadInvoiceItemsFromCloudStorageAsync(
+        string fileUrl,
+        ProcessingOptions? options = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        options ??= new ProcessingOptions();
+        
+        await foreach (var item in _cloudFileProcessor.ProcessFileWithRetryAsync<InvoiceItemLine>(fileUrl, options, cancellationToken))
+        {
+            yield return item;
+        }
+    }
+
+    public async Task<CloudFileMetadata> GetFileMetadataAsync(
+        string fileUrl,
+        CancellationToken cancellationToken = default)
+    {
+        return await _cloudFileProcessor.GetFileMetadataAsync(fileUrl, cancellationToken);
     }
 }
