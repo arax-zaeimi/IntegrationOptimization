@@ -51,6 +51,14 @@ public class ProcessProdcutsUseCase(ILogger<ProcessProdcutsUseCase> logger, IPro
         }
     }
 
+    public async Task ProcessInvoice()
+    {
+        await foreach (var item in apiClient.ReadInvoiceItemsFromCompressedFileAsync("Assets\\invoice_reconciliation_20251216_032532.jsonl.gz"))
+        {
+            logger.LogInformation("Processed invoice item for customer: {CustomerId} - {CustomerName}", item.CustomerId, item.CustomerName);
+        }
+    }
+
     private async IAsyncEnumerable<Product> FetchProductsOptimized()
     {
         // Fetch and process products in a streaming manner
